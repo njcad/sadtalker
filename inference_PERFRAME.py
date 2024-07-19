@@ -119,7 +119,7 @@ def main(args):
     # modification is in generate, where we try to show each frame as it is generated
     print("beginning animation generation")
     animation_start = time.time()
-    result = animate_from_coeff.generate(data, save_dir, pic_path, crop_info, enhancer=args.enhancer, 
+    result = animate_from_coeff.generate_PERFRAME(data, save_dir, pic_path, crop_info, enhancer=args.enhancer, 
                                          background_enhancer=args.background_enhancer, preprocess=args.preprocess, img_size=args.size)
     animation_end = time.time()
     print(f"Total animation time: {animation_end - animation_start}")
