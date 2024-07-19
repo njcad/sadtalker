@@ -187,7 +187,6 @@ class AnimateFromCoeff():
         predictions_video = predictions_video.reshape((-1,) + predictions_video.shape[2:])
         predictions_video = predictions_video[:frame_num]
 
-        # why do this separately? this is so redundant
         video = []
         for idx in range(predictions_video.shape[0]):
             image = predictions_video[idx]
@@ -255,4 +254,121 @@ class AnimateFromCoeff():
         os.remove(new_audio_path)
 
         return return_path
+
+
+import os
+import numpy as np
+import cv2
+import torch
+from tqdm import tqdm
+from skimage import img_as_ubyte
+from pydub import AudioSegment
+import simpleaudio as sa
+import imageio
+
+def generate_PERFRAME(self, x, video_save_dir, pic_path, crop_info, enhancer=None, background_enhancer=None, preprocess='crop', img_size=256):
+    source_image = x['source_image'].type(torch.FloatTensor)
+    source_semantics = x['source_semantics'].type(torch.FloatTensor)
+    target_semantics = x['target_semantics_list'].type(torch.FloatTensor)
+    source_image = source_image.to(self.device)
+    source_semantics = source_semantics.to(self.device)
+    target_semantics = target_semantics.to(self.device)
+    if 'yaw_c_seq' in x:
+        yaw_c_seq = x['yaw_c_seq'].type(torch.FloatTensor).to(self.device)
+    else:
+        yaw_c_seq = None
+    if 'pitch_c_seq' in x:
+        pitch_c_seq = x['pitch_c_seq'].type(torch.FloatTensor).to(self.device)
+    else:
+        pitch_c_seq = None
+    if 'roll_c_seq' in x:
+        roll_c_seq = x['roll_c_seq'].type(torch.FloatTensor).to(self.device)
+    else:
+        roll_c_seq = None
+
+    frame_num = x['frame_num']
+
+    predictions_video = make_animation(source_image, source_semantics, target_semantics,
+                                       self.generator, self.kp_extractor, self.he_estimator, self.mapping, 
+                                       yaw_c_seq, pitch_c_seq, roll_c_seq, use_exp=True)
+
+    predictions_video = predictions_video.reshape((-1,) + predictions_video.shape[2:])
+    predictions_video = predictions_video[:frame_num]
+
+    ### NATE MODIFICATIONS ###
+    # Prepare audio playback
+    audio_path = x['audio_path']
+    sound = AudioSegment.from_file(audio_path)
+    start_time = 0
+    end_time = start_time + frame_num * (1/25) * 1000
+    word = sound.set_frame_rate(16000)[start_time:end_time]
+    audio_data = np.array(word.get_array_of_samples())
+    audio_data = audio_data.astype(np.float32) / 32768.0  # Normalize to range [-1, 1]
+    play_obj = sa.play_buffer(audio_data, 1, 2, 16000)  # 1 channel, 2 bytes per sample, 16000 Hz
+
+    original_size = crop_info[0]
+    for idx in range(predictions_video.shape[0]):
+        image = predictions_video[idx]
+        image = np.transpose(image.data.cpu().numpy(), [1, 2, 0]).astype(np.float32)
+        image = img_as_ubyte(image)
+
+        if original_size:
+            image = cv2.resize(image, (img_size, int(img_size * original_size[1] / original_size[0])))
+
+        cv2.imshow('Frame', image)
+        if cv2.waitKey(1) & 0xFF == ord('q'):
+            break
+
+    play_obj.wait_done()
+    cv2.destroyAllWindows()
+
+    video_name = x['video_name'] + '.mp4'
+    path = os.path.join(video_save_dir, 'temp_' + video_name)
+
+    result = [img_as_ubyte(predictions_video[i]) for i in range(predictions_video.shape[0])]
+    if original_size:
+        result = [cv2.resize(result_i, (img_size, int(img_size * original_size[1] / original_size[0]))) for result_i in result]
+
+    imageio.mimsave(path, result, fps=float(25))
+
+    av_path = os.path.join(video_save_dir, video_name)
+    return_path = av_path
+
+    audio_name = os.path.splitext(os.path.split(audio_path)[-1])[0]
+    new_audio_path = os.path.join(video_save_dir, audio_name + '.wav')
+    word.export(new_audio_path, format="wav")
+
+    save_video_with_watermark(path, new_audio_path, av_path, watermark=False)
+    print(f'The generated video is named {video_save_dir}/{video_name}') 
+
+    if 'full' in preprocess.lower():
+        video_name_full = x['video_name'] + '_full.mp4'
+        full_video_path = os.path.join(video_save_dir, video_name_full)
+        return_path = full_video_path
+        paste_pic(path, pic_path, crop_info, new_audio_path, full_video_path, extended_crop=True if 'ext' in preprocess.lower() else False)
+        print(f'The generated video is named {video_save_dir}/{video_name_full}') 
+    else:
+        full_video_path = av_path 
+
+    if enhancer:
+        video_name_enhancer = x['video_name'] + '_enhanced.mp4'
+        enhanced_path = os.path.join(video_save_dir, 'temp_' + video_name_enhancer)
+        av_path_enhancer = os.path.join(video_save_dir, video_name_enhancer) 
+        return_path = av_path_enhancer
+
+        try:
+            enhanced_images_gen_with_len = enhancer_generator_with_len(full_video_path, method=enhancer, bg_upsampler=background_enhancer)
+            imageio.mimsave(enhanced_path, enhanced_images_gen_with_len, fps=float(25))
+        except:
+            enhanced_images_gen_with_len = enhancer_list(full_video_path, method=enhancer, bg_upsampler=background_enhancer)
+            imageio.mimsave(enhanced_path, enhanced_images_gen_with_len, fps=float(25))
+
+        save_video_with_watermark(enhanced_path, new_audio_path, av_path_enhancer, watermark=False)
+        print(f'The generated video is named {video_save_dir}/{video_name_enhancer}')
+        os.remove(enhanced_path)
+
+    os.remove(path)
+    os.remove(new_audio_path)
+
+    return return_path
 

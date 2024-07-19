@@ -1,3 +1,10 @@
+"""
+Restructuring SadTalker alg to return each frame as it goes. Ultimate goal is to speed it up.
+Can also try increasing batch size, pruning out unnecessary code. 
+Nate Cadicamo
+"""
+
+
 from glob import glob
 import shutil
 import torch
@@ -7,51 +14,68 @@ from argparse import ArgumentParser
 
 from src.utils.preprocess import CropAndExtract
 from src.test_audio2coeff import Audio2Coeff  
-from src.facerender.animate import AnimateFromCoeff
+from src.facerender.animate_PERFRAME import AnimateFromCoeff
 from src.generate_batch import get_data
 from src.generate_facerender_batch import get_facerender_data
 from src.utils.init_path import init_path
 
 def main(args):
-    #torch.backends.cudnn.enabled = False
+    """
+    Main driver. Accepts args specified in command line. Crucial args are source_image, 
+    driven_audio, and result_dir
+    """
 
+    # get image and audio
     pic_path = args.source_image
     audio_path = args.driven_audio
+
+    # create saving result directory. 
+    # TODO: do we want to restructure this to just return to some video player?
     save_dir = os.path.join(args.result_dir, strftime("%Y_%m_%d_%H.%M.%S"))
     os.makedirs(save_dir, exist_ok=True)
+
+    # set pose_style: default to 0
     pose_style = args.pose_style
+
+    # set device. need GPU for reasonable inference
     device = args.device
 
-    #device = torch.device("mps")
-
+    # set batch size. TODO: increase batch size?
     batch_size = args.batch_size
+
+    # yaw, pitch, roll. default to None
     input_yaw_list = args.input_yaw
     input_pitch_list = args.input_pitch
     input_roll_list = args.input_roll
+
+    # eyeblink and pose both default to None
     ref_eyeblink = args.ref_eyeblink
     ref_pose = args.ref_pose
 
+    # define current root path and sadtalker model paths from there
     current_root_path = os.path.split(sys.argv[0])[0]
+    sadtalker_paths = init_path(args.checkpoint_dir, os.path.join(current_root_path, 'src/config'), 
+                                args.size, args.old_version, args.preprocess)
 
-    sadtalker_paths = init_path(args.checkpoint_dir, os.path.join(current_root_path, 'src/config'), args.size, args.old_version, args.preprocess)
-
-    #init model
+    # initialize models. TODO: for fast inference, we should load these in memory just once
+    load_models_start = time.time()
     preprocess_model = CropAndExtract(sadtalker_paths, device)
-
-    audio_to_coeff = Audio2Coeff(sadtalker_paths, device)
-    
+    audio_to_coeff = Audio2Coeff(sadtalker_paths, device) 
     animate_from_coeff = AnimateFromCoeff(sadtalker_paths, device)
+    load_models_end = time.time()
+    print(f"Time to initialize models in main: {load_models_end - load_models_start}")
 
-    #crop image and extract 3dmm from image
+    # crop image and extract 3dmm from image
     first_frame_dir = os.path.join(save_dir, 'first_frame_dir')
     os.makedirs(first_frame_dir, exist_ok=True)
     print('3DMM Extraction for source image')
-    first_coeff_path, crop_pic_path, crop_info =  preprocess_model.generate(pic_path, first_frame_dir, args.preprocess,\
-                                                                             source_image_flag=True, pic_size=args.size)
+    first_coeff_path, crop_pic_path, crop_info =  preprocess_model.generate(pic_path, first_frame_dir, args.preprocess, 
+                                                                            source_image_flag=True, pic_size=args.size)
     if first_coeff_path is None:
         print("Can't get the coeffs of the input")
         return
 
+    # we will assume this is always None
     if ref_eyeblink is not None:
         ref_eyeblink_videoname = os.path.splitext(os.path.split(ref_eyeblink)[-1])[0]
         ref_eyeblink_frame_dir = os.path.join(save_dir, ref_eyeblink_videoname)
@@ -61,6 +85,7 @@ def main(args):
     else:
         ref_eyeblink_coeff_path=None
 
+    # same assumption: this should always be None
     if ref_pose is not None:
         if ref_pose == ref_eyeblink: 
             ref_pose_coeff_path = ref_eyeblink_coeff_path
@@ -73,22 +98,31 @@ def main(args):
     else:
         ref_pose_coeff_path=None
 
-    #audio2ceoff
+    # audio2coeff: generates coefficients from test_audio2coeff audio2exp_model
+    print("getting audio2coeff data")
     batch = get_data(first_coeff_path, audio_path, device, ref_eyeblink_coeff_path, still=args.still)
+    print("getting audio2coeff coefficients")
     coeff_path = audio_to_coeff.generate(batch, save_dir, pose_style, ref_pose_coeff_path)
 
-    # 3dface render
+    # 3dface render. this will make its own video separate from the one below. I don't think it works
     if args.face3dvis:
         from src.face3d.visualize import gen_composed_video
         gen_composed_video(args, device, first_coeff_path, coeff_path, audio_path, os.path.join(save_dir, '3dface.mp4'))
     
-    #coeff2video
+    # coeff2video: actual video generator. first, generate data
+    print("getting face render data")
     data = get_facerender_data(coeff_path, crop_pic_path, first_coeff_path, audio_path, 
                                 batch_size, input_yaw_list, input_pitch_list, input_roll_list,
                                 expression_scale=args.expression_scale, still_mode=args.still, preprocess=args.preprocess, size=args.size)
     
-    result = animate_from_coeff.generate(data, save_dir, pic_path, crop_info, \
-                                enhancer=args.enhancer, background_enhancer=args.background_enhancer, preprocess=args.preprocess, img_size=args.size)
+    # now, the actual generation
+    # modification is in generate, where we try to show each frame as it is generated
+    print("beginning animation generation")
+    animation_start = time.time()
+    result = animate_from_coeff.generate(data, save_dir, pic_path, crop_info, enhancer=args.enhancer, 
+                                         background_enhancer=args.background_enhancer, preprocess=args.preprocess, img_size=args.size)
+    animation_end = time.time()
+    print(f"Total animation time: {animation_end - animation_start}")
     
     shutil.move(result, save_dir+'.mp4')
     print('The generated video is named:', save_dir+'.mp4')
