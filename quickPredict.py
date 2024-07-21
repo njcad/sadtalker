@@ -150,15 +150,19 @@ def main():
     """
 
     # declare image
-    image_path = '../samples/newton.png'
+    image_path = Path('../samples/newton.png')
+    user_image_path = Path(input("Source image path from current directory: "))
+    if user_image_path != "":
+        image_path = user_image_path
 
     # instantiate TalkingPortrait method
     talker = TalkingPortrait()
     talker.set_image(image_path)
 
     # predict and display
-    audio_path = '../samples/newton.m4a'
+    audio_path = Path('../samples/newton.m4a')
     vid_path = talker.run(audio_path)
+    
 
 
 if __name__ == '__main__':
