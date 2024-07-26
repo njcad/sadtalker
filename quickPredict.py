@@ -63,7 +63,7 @@ class TalkingPortrait():
         # define results directory
         self.results_dir = "results"
 
-    def set_image(self, source_image: Path):
+    def set_image(self, source_image):
         """
         Grab and save 3DMM extraction for source image.
         """
@@ -85,7 +85,8 @@ class TalkingPortrait():
             source_image, 
             first_frame_dir, 
             preprocess, 
-            source_image_flag=True
+            source_image_flag=True,
+            pic_size = 256
         )
 
         # error checking
@@ -94,7 +95,7 @@ class TalkingPortrait():
             return
         
 
-    def run(self, driven_audio: Path):
+    def run(self, driven_audio):
         """
         To be used in loop, fed new audio and returning video.
         """
@@ -127,23 +128,27 @@ class TalkingPortrait():
             expression_scale=1.0,
             still_mode=False,
             preprocess="full",
+            size=256
         )
-        self.animate_from_coeff.generate(
+        result = self.animate_from_coeff.generate(
             data, 
             self.results_dir, 
             self.source_image, 
             self.crop_info,
             enhancer=None, 
             background_enhancer=None,
-            preprocess="full"
+            preprocess="full",
+            img_size=256
         )
 
         # save the output
-        output = "/tmp/out.mp4"
-        mp4_path = os.path.join(self.results_dir, [f for f in os.listdir(self.results_dir) if "enhanced.mp4" in f][0])
-        shutil.copy(mp4_path, output)
+        shutil.move(result, save_dir+'.mp4')
+        print('The generated video is named:', save_dir+'.mp4')
+        # output = "/tmp/out.mp4"
+        # mp4_path = os.path.join(self.results_dir, [f for f in os.listdir(self.results_dir) if "enhanced.mp4" in f][0])
+        # shutil.copy(mp4_path, output)
 
-        return Path(output)
+        # return Path(output)
 
 
 def main():
