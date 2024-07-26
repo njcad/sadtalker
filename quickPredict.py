@@ -150,8 +150,8 @@ def main():
     """
 
     # declare image
-    image_path = Path('../samples/newton.png')
-    user_image_path = Path(input("Source image path from current directory: "))
+    image_path = '../samples/newton.png'
+    user_image_path = input("Source image path from current directory: ")
     if user_image_path != "":
         image_path = user_image_path
 
@@ -160,8 +160,8 @@ def main():
     talker.set_image(image_path)
 
     # predict and display
-    audio_path = Path('../samples/newton.m4a')
-    user_audio_path = Path(input("Source audio path from current directory: "))
+    audio_path = '../samples/newton.m4a'
+    user_audio_path = input("Source audio path from current directory: ")
     if user_audio_path != "":
         audio_path = user_audio_path
     vid_path = talker.run(audio_path)
