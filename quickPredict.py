@@ -33,7 +33,7 @@ class TalkingPortrait():
         self.preprocess = "crop"
 
         # set image size to default 256. TODO: other size?
-        self.size = 400
+        self.size = 512
 
         # set pose_style: default to 0
         self.pose_style = 0
