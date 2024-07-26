@@ -50,7 +50,9 @@ class TalkingPortrait():
 
         # eyeblink and pose both default to None
         self.ref_eyeblink = None
+        self.ref_eyeblink_coeff_path = None
         self.ref_pose = None
+        self.ref_pose_coeff_path = None
 
         # initialize image data, set up in set_image()
         self.source_image = None
