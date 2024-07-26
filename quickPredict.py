@@ -133,7 +133,7 @@ class TalkingPortrait():
             self.results_dir, 
             self.source_image, 
             self.crop_info,
-            enhancer="gfpgan", 
+            enhancer=None, 
             background_enhancer=None,
             preprocess="full"
         )
