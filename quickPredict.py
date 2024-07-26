@@ -27,7 +27,7 @@ class TalkingPortrait():
         """
 
         # define device. GPU highly necessary
-        device = "cuda"
+        self.device = "cuda"
 
         # define sadtalker model paths 
         sadtalker_paths = init_path("checkpoints", os.path.join("src","config"))
