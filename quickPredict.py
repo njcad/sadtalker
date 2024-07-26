@@ -44,9 +44,9 @@ class TalkingPortrait():
         self.batch_size = 2
 
         # yaw, pitch, roll. default to None
-        self.input_yaw_list = None
-        self.input_pitch_list = None
-        self.input_roll_list = None
+        self.input_yaw = None
+        self.input_pitch = None
+        self.input_roll = None
 
         # eyeblink and pose both default to None
         self.ref_eyeblink = None
