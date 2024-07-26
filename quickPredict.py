@@ -12,7 +12,7 @@ from argparse import ArgumentParser
 
 from src.utils.preprocess import CropAndExtract
 from src.test_audio2coeff import Audio2Coeff  
-from src.facerender.animate_PERFRAME import AnimateFromCoeff
+from src.facerender.animate import AnimateFromCoeff
 from src.generate_batch import get_data
 from src.generate_facerender_batch import get_facerender_data
 from src.utils.init_path import init_path
