@@ -32,8 +32,8 @@ class TalkingPortrait():
         # set preprocess mode to default crop. TODO: other modes?
         self.preprocess = "crop"
 
-        # set image size to default 256
-        self.size = 256
+        # set image size to default 256. TODO: other size?
+        self.size = 400
 
         # set pose_style: default to 0
         self.pose_style = 0
@@ -161,28 +161,38 @@ class TalkingPortrait():
 
 def main():
     """
-    Driver for Living Portrait class.
+    Driver for Talking Portrait class.
     """
 
     # declare image
-    image_path = '../samples/newton.png'
+    default_image_path = '../samples/newton.png'
     user_image_path = input("Source image path from current directory: ").strip()
     if user_image_path:
         image_path = user_image_path
+    else:
+        image_path = default_image_path
 
-    # instantiate TalkingPortrait method
+    # instantiate TalkingPortrait instance, set image once
     talker = TalkingPortrait()
     talker.set_image(image_path)
 
-    # predict and display
-    audio_path = '../samples/newton.m4a'
-    user_audio_path = input("Source audio path from current directory: ").strip()
-    if user_audio_path:
-        audio_path = user_audio_path
-        
-    vid_path = talker.run(audio_path)
-    
+    # allow user to continually feed audio
+    default_audio_path = '../samples/newton.m4a'
+    while True:       
+        user_audio_path = input("Source audio path from current directory: ").strip()
+        if user_audio_path:
+            audio_path = user_audio_path
+        else:
+            audio_path = default_audio_path
 
+        # run with this audio 
+        talker.run(audio_path)
+
+        # if user wants to continue
+        cont = input("Continue with new audio file? Y/N: ").strip()
+        if cont != "N":
+            break
+    
 
 if __name__ == '__main__':
     main()
