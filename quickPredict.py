@@ -152,11 +152,53 @@ class TalkingPortrait():
         # save the output
         shutil.move(result, self.results_dir+'.mp4')
         print('The generated video is named:', self.results_dir+'.mp4')
-        # output = "/tmp/out.mp4"
-        # mp4_path = os.path.join(self.results_dir, [f for f in os.listdir(self.results_dir) if "enhanced.mp4" in f][0])
-        # shutil.copy(mp4_path, output)
+        
 
-        # return Path(output)
+def get_image(gen=False):
+    """
+    Grab an image for Talking Portrait. 
+    Default: user specified input image from file.
+    TODO: enable call API for image gen, or source from a bank.
+    """
+
+    # default case: no generation, just sourcing from file
+    if not gen:
+        default_image_path = '../samples/newton.png'
+        user_image_path = input("Source image path from current directory: ").strip()
+        if user_image_path:
+            image_path = user_image_path
+        else:
+            image_path = default_image_path
+        return image_path
+
+    # generative case: API call to generate image
+    if gen:
+        # TODO: implement functionality
+        pass
+
+
+def get_audio(gen=False):
+    """
+    Grab audio file (.wav or .m4a) for Talking Portrait. 
+    Default: user specified input audio from file.
+    TODO: enable call API for audio gen, or source from a bank.
+    """
+
+    # default case: no generation, just sourcing from file
+    if not gen:
+        default_audio_path = '../samples/newton.m4a'      
+        user_audio_path = input("Source audio path from current directory: ").strip()
+        if user_audio_path:
+            audio_path = user_audio_path
+        else:
+            audio_path = default_audio_path
+        return audio_path
+
+    # generative case: API call to generate audio
+    if gen:
+        # TODO: implement functionality
+        pass
+    
 
 
 def main():
@@ -164,29 +206,27 @@ def main():
     Driver for Talking Portrait class.
     """
 
-    # declare image
-    default_image_path = '../samples/newton.png'
-    user_image_path = input("Source image path from current directory: ").strip()
-    if user_image_path:
-        image_path = user_image_path
-    else:
-        image_path = default_image_path
-
-    # instantiate TalkingPortrait instance, set image once
+    # instantiate TalkingPortrait instance
     talker = TalkingPortrait()
+
+    # declare image
+    image_path = get_image()
+    
+    # set image once
+    image_start_time = time.time()
     talker.set_image(image_path)
+    image_end_time = time.time()
+    print(f"Time to set image in TalkingPortrait model = {image_end_time - image_start_time}")
 
     # allow user to continually feed audio
-    default_audio_path = '../samples/newton.m4a'
     while True:       
-        user_audio_path = input("Source audio path from current directory: ").strip()
-        if user_audio_path:
-            audio_path = user_audio_path
-        else:
-            audio_path = default_audio_path
+        audio_path = get_audio()
 
         # run with this audio 
+        talker_start_time = time.time()
         talker.run(audio_path)
+        talker_end_time = time.time()
+        print(f"Time to generate TalkingPortrait = {talker_end_time - talker_start_time}")
 
         # if user wants to continue
         cont = input("Continue with new audio file? Y/N: ").strip()
