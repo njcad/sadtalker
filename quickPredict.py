@@ -150,8 +150,8 @@ class TalkingPortrait():
         )
 
         # save the output
-        shutil.move(result, save_dir+'.mp4')
-        print('The generated video is named:', save_dir+'.mp4')
+        shutil.move(result, self.results_dir+'.mp4')
+        print('The generated video is named:', self.results_dir+'.mp4')
         # output = "/tmp/out.mp4"
         # mp4_path = os.path.join(self.results_dir, [f for f in os.listdir(self.results_dir) if "enhanced.mp4" in f][0])
         # shutil.copy(mp4_path, output)
