@@ -151,8 +151,8 @@ def main():
 
     # declare image
     image_path = '../samples/newton.png'
-    user_image_path = input("Source image path from current directory: ")
-    if user_image_path != "":
+    user_image_path = input("Source image path from current directory: ").strip()
+    if user_image_path:
         image_path = user_image_path
 
     # instantiate TalkingPortrait method
@@ -161,10 +161,10 @@ def main():
 
     # predict and display
     audio_path = '../samples/newton.m4a'
-    user_audio_path = input("Source audio path from current directory: ")
-    if user_audio_path != "":
+    user_audio_path = input("Source audio path from current directory: ").strip()
+    if user_audio_path:
         audio_path = user_audio_path
-    vid_path = talker.run(audio_path)
+        
     vid_path = talker.run(audio_path)
     
 
