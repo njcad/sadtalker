@@ -161,6 +161,10 @@ def main():
 
     # predict and display
     audio_path = Path('../samples/newton.m4a')
+    user_audio_path = Path(input("Source audio path from current directory: "))
+    if user_audio_path != "":
+        audio_path = user_audio_path
+    vid_path = talker.run(audio_path)
     vid_path = talker.run(audio_path)
     
 
