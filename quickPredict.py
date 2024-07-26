@@ -33,9 +33,9 @@ class TalkingPortrait():
         sadtalker_paths = init_path("checkpoints", os.path.join("src","config"))
 
         # initialize models 
-        self.preprocess_model = CropAndExtract(sadtalker_paths, device)
-        self.audio_to_coeff = Audio2Coeff(sadtalker_paths, device) 
-        self.animate_from_coeff = AnimateFromCoeff(sadtalker_paths, device)
+        self.preprocess_model = CropAndExtract(sadtalker_paths, self.device)
+        self.audio_to_coeff = Audio2Coeff(sadtalker_paths, self.device) 
+        self.animate_from_coeff = AnimateFromCoeff(sadtalker_paths, self.device)
 
         # set pose_style: default to 0
         self.pose_style = 0
