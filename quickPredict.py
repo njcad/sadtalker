@@ -38,8 +38,8 @@ class TalkingPortrait():
         # set pose_style: default to 0
         self.pose_style = 0
 
-        # set batch size. TODO: increase batch size?
-        self.batch_size = 2
+        # set batch size, default to 2. TODO: increase batch size?
+        self.batch_size = 4
 
         # yaw, pitch, roll. default to None
         self.input_yaw = None
