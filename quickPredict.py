@@ -29,13 +29,11 @@ class TalkingPortrait():
         # define device. GPU highly necessary
         self.device = "cuda"
 
-        # define sadtalker model paths 
-        sadtalker_paths = init_path("checkpoints", os.path.join("src","config"))
+        # set preprocess mode to default crop. TODO: other modes?
+        self.preprocess = "crop"
 
-        # initialize models 
-        self.preprocess_model = CropAndExtract(sadtalker_paths, self.device)
-        self.audio_to_coeff = Audio2Coeff(sadtalker_paths, self.device) 
-        self.animate_from_coeff = AnimateFromCoeff(sadtalker_paths, self.device)
+        # set image size to default 256
+        self.size = 256
 
         # set pose_style: default to 0
         self.pose_style = 0
@@ -63,6 +61,17 @@ class TalkingPortrait():
         # define results directory
         self.results_dir = "results"
 
+         # define sadtalker model paths 
+        # sadtalker_paths = init_path("checkpoints", os.path.join("src","config"))
+        current_root_path = os.path.split(sys.argv[0])[0]
+        sadtalker_paths = init_path("./checkpoints", os.path.join(current_root_path, "src/config"), self.size, False, self.preprocess)
+
+        # initialize models 
+        self.preprocess_model = CropAndExtract(sadtalker_paths, self.device)
+        self.audio_to_coeff = Audio2Coeff(sadtalker_paths, self.device) 
+        self.animate_from_coeff = AnimateFromCoeff(sadtalker_paths, self.device)
+        
+
     def set_image(self, source_image):
         """
         Grab and save 3DMM extraction for source image.
@@ -80,13 +89,12 @@ class TalkingPortrait():
         os.makedirs(first_frame_dir)
 
         # crop image and extract 3dmm from image
-        preprocess = "full"
         self.first_coeff_path, self.crop_pic_path, self.crop_info = self.preprocess_model.generate(
             source_image, 
             first_frame_dir, 
-            preprocess, 
+            self.preprocess, 
             source_image_flag=True,
-            pic_size = 256
+            pic_size=self.size
         )
 
         # error checking
@@ -127,8 +135,8 @@ class TalkingPortrait():
             self.input_roll,
             expression_scale=1.0,
             still_mode=False,
-            preprocess="full",
-            size=256
+            preprocess=self.preprocess,
+            size=self.size
         )
         result = self.animate_from_coeff.generate(
             data, 
@@ -137,8 +145,8 @@ class TalkingPortrait():
             self.crop_info,
             enhancer=None, 
             background_enhancer=None,
-            preprocess="full",
-            img_size=256
+            preprocess=self.preprocess,
+            img_size=self.size
         )
 
         # save the output
