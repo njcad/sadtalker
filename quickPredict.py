@@ -33,7 +33,7 @@ class TalkingPortrait():
         self.preprocess = "crop"
 
         # set image size to default 256. TODO: other size?
-        self.size = 512
+        self.size = 256
 
         # set pose_style: default to 0
         self.pose_style = 0
@@ -190,7 +190,7 @@ def main():
 
         # if user wants to continue
         cont = input("Continue with new audio file? Y/N: ").strip()
-        if cont != "N":
+        if cont != "Y":
             break
     
 
