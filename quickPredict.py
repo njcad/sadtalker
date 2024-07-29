@@ -151,7 +151,10 @@ class TalkingPortrait():
 
         # save the output
         shutil.move(result, self.results_dir+'.mp4')
-        print('The generated video is named:', self.results_dir+'.mp4')
+        # print('The generated video is named:', self.results_dir+'.mp4')
+
+        # return the output
+        return self.results_dir+'.mp4'
         
 
 def get_image(gen=False):
@@ -206,32 +209,48 @@ def main():
     Driver for Talking Portrait class.
     """
 
+    # pull arguments
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--image', type=str, required=True, help='Path to input image file.')
+    parser.add_argument('--audio', type=str, required=True, help='Path to the input audio file.')
+    args = parser.parse_args()
+
     # instantiate TalkingPortrait instance
     talker = TalkingPortrait()
 
     # declare image
-    image_path = get_image()
+    # image_path = get_image()
+    image_path = args.image
     
     # set image once
     image_start_time = time.time()
     talker.set_image(image_path)
     image_end_time = time.time()
-    print(f"Time to set image in TalkingPortrait model = {image_end_time - image_start_time}")
+    # print(f"Time to set image in TalkingPortrait model = {image_end_time - image_start_time}")
 
-    # allow user to continually feed audio
-    while True:       
-        audio_path = get_audio()
+    # declare audio
+    audio_path = args.audio
 
-        # run with this audio 
-        talker_start_time = time.time()
-        talker.run(audio_path)
-        talker_end_time = time.time()
-        print(f"Time to generate TalkingPortrait = {talker_end_time - talker_start_time}")
+    # get vid path
+    vid_path = talker.run(audio_path)
+    return vid_path
 
-        # if user wants to continue
-        cont = input("Continue with new audio file? Y/N: ").strip()
-        if cont != "Y":
-            break
+    
+
+    # # allow user to continually feed audio
+    # while True:       
+    #     audio_path = get_audio()
+
+    #     # run with this audio 
+    #     talker_start_time = time.time()
+    #     talker.run(audio_path)
+    #     talker_end_time = time.time()
+    #     print(f"Time to generate TalkingPortrait = {talker_end_time - talker_start_time}")
+
+    #     # if user wants to continue
+    #     cont = input("Continue with new audio file? Y/N: ").strip()
+    #     if cont != "Y":
+    #         break
     
 
 if __name__ == '__main__':
